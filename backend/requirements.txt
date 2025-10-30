@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+google-genai
+python-multipart
+pillow
+pydub
+speechrecognition
+pymongo
+python-dotenv
+requests
