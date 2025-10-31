@@ -11,7 +11,7 @@ MONGO_URI = os.getenv("MONGO_URI")
 
 # Connect to MongoDB client
 client = MongoClient(MONGO_URI)
-db = client.get_database()
+db = client["factchecker_db"]  # Specify database name for MongoDB Atlas
 
 # Check MongoDB connection
 try:
