@@ -10,9 +10,30 @@ export default function FactCheckerResult({ result }) {
   const cached = result.cached || false;
   const cacheNote = result.cache_note || '';
 
+  // Multimodal-specific fields
+  const mediaType = result.media_type || null;
+  const mediaFilename = result.media_filename || null;
+  const extractedText = result.extracted_text || null;
+  const researchSummary = result.research_summary || null;
+
+  // Get media type emoji
+  const getMediaEmoji = (type) => {
+    if (type?.startsWith('image/')) return '📸';
+    if (type?.startsWith('video/')) return '🎥';
+    if (type?.startsWith('audio/')) return '🎤';
+    return '📄';
+  };
+
   return (
     <div className="result">
       <h2>Fact-Check Result</h2>
+
+      {mediaType && mediaFilename && (
+        <div className="result-section media-info">
+          <strong>{getMediaEmoji(mediaType)} Media File:</strong>
+          <p>{mediaFilename}</p>
+        </div>
+      )}
 
       <div className="result-section">
         <strong>Claim:</strong>
@@ -28,6 +49,22 @@ export default function FactCheckerResult({ result }) {
         <div className="result-section">
           <strong>Explanation:</strong>
           <p>{explanation}</p>
+        </div>
+      )}
+
+      {/* {extractedText && (
+        <div className="result-section extracted-text">
+          <strong>Extracted Content:</strong>
+          <p style={{ whiteSpace: 'pre-wrap', fontSize: '0.9em', color: '#666' }}>
+            {extractedText}
+          </p>
+        </div>
+      )} */}
+
+      {researchSummary && (
+        <div className="result-section">
+          <strong>🔍 Research Summary:</strong>
+          <p>{researchSummary}</p>
         </div>
       )}
 
