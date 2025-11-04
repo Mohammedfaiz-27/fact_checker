@@ -19,7 +19,8 @@
       "Bash(timeout:*)",
       "Bash(del IMPLEMENTATION_SUMMARY.md TESTING_GUIDE.md)",
       "Bash(curl:*)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(del test_url_debug.py test_url_real.py test_url_simple.py)"
     ],
     "deny": [],
     "ask": []

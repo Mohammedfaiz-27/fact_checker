@@ -1,12 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { checkClaim, checkMultimodalClaim } from '../services/api';
+import { checkClaim, checkMultimodalClaim, checkURLClaim } from '../services/api';
 
 export default function FactCheckerInput({ onResult }) {
   const [input, setInput] = useState('');
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
-  const [inputMode, setInputMode] = useState('text'); // 'text', 'file', 'voice'
+  const [inputMode, setInputMode] = useState('text'); // 'text', 'file', 'voice', 'link'
   const [loading, setLoading] = useState(false);
 
   const fileInputRef = useRef(null);
@@ -19,12 +19,16 @@ export default function FactCheckerInput({ onResult }) {
     setLoading(true);
 
     try {
-      // Use professional fact-checking endpoint for text-only requests
-      // Use multimodal endpoint only when there's a file attached
       let result;
-      if (selectedFile) {
+
+      if (inputMode === 'link') {
+        // URL fact-checking endpoint
+        result = await checkURLClaim(input);
+      } else if (selectedFile) {
+        // Multimodal endpoint (image/video/audio)
         result = await checkMultimodalClaim(input, selectedFile);
       } else {
+        // Text-only endpoint
         result = await checkClaim(input);
       }
 
@@ -93,6 +97,13 @@ export default function FactCheckerInput({ onResult }) {
         </button>
         <button
           type="button"
+          className={`mode-btn ${inputMode === 'link' ? 'active' : ''}`}
+          onClick={() => setInputMode('link')}
+        >
+          Link
+        </button>
+        <button
+          type="button"
           className={`mode-btn ${inputMode === 'file' ? 'active' : ''}`}
           onClick={() => setInputMode('file')}
         >
@@ -115,6 +126,17 @@ export default function FactCheckerInput({ onResult }) {
             onChange={e => setInput(e.target.value)}
             placeholder="Enter claim to fact-check"
             required={!selectedFile}
+          />
+        )}
+
+        {inputMode === 'link' && (
+          <input
+            className="input-text"
+            type="url"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            placeholder="Enter article URL (e.g., https://example.com/article)"
+            required
           />
         )}
 

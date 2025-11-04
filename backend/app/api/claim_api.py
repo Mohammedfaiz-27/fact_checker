@@ -12,6 +12,9 @@ professional_service = ProfessionalFactCheckService()
 class ClaimInput(BaseModel):
     claim_text: str
 
+class URLInput(BaseModel):
+    url: str
+
 @router.post("/")
 async def check_claim(data: ClaimInput):
     # Run blocking check_fact in threadpool to prevent blocking event loop
@@ -48,4 +51,14 @@ async def check_multimodal_claim(
         # Text only
         result = await loop.run_in_executor(None, service.check_fact, claim_text)
 
+    return result
+
+@router.post("/url")
+async def check_url_claim(data: URLInput):
+    """
+    Handle fact checking from a URL/link.
+    Extracts article content and fact-checks the main claims.
+    """
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(None, service.check_url_fact, data.url)
     return result

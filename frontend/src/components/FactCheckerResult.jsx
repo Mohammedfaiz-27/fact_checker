@@ -16,6 +16,12 @@ export default function FactCheckerResult({ result }) {
   const extractedText = result.extracted_text || null;
   const researchSummary = result.research_summary || null;
 
+  // URL-specific fields
+  const url = result.url || null;
+  const articleTitle = result.article_title || null;
+  const articleSource = result.article_source || null;
+  const articlePreview = result.article_preview || null;
+
   // Get media type emoji
   const getMediaEmoji = (type) => {
     if (type?.startsWith('image/')) return '📸';
@@ -24,9 +30,56 @@ export default function FactCheckerResult({ result }) {
     return '📄';
   };
 
+  // Helper function to render text with clickable URLs
+  const renderTextWithLinks = (text) => {
+    if (!text) return null;
+
+    // Regular expression to match URLs
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+
+    return parts.map((part, index) => {
+      if (part.match(urlRegex)) {
+        return (
+          <a
+            key={index}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#4A90E2', textDecoration: 'underline' }}
+          >
+            {part}
+          </a>
+        );
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
+
   return (
     <div className="result">
       <h2>Fact-Check Result</h2>
+
+      {url && (
+        <div className="result-section url-info">
+          <strong>🔗 Source URL:</strong>
+          <p>
+            <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: '#4A90E2' }}>
+              {url}
+            </a>
+          </p>
+          {articleTitle && (
+            <p style={{ marginTop: '0.5rem' }}>
+              <strong>Article:</strong> {articleTitle}
+            </p>
+          )}
+          {articleSource && (
+            <p style={{ marginTop: '0.25rem', fontSize: '0.9em', color: '#666' }}>
+              <strong>Publisher:</strong> {articleSource}
+            </p>
+          )}
+        </div>
+      )}
 
       {mediaType && mediaFilename && (
         <div className="result-section media-info">
@@ -48,7 +101,7 @@ export default function FactCheckerResult({ result }) {
       {explanation && (
         <div className="result-section">
           <strong>Explanation:</strong>
-          <p>{explanation}</p>
+          <p>{renderTextWithLinks(explanation)}</p>
         </div>
       )}
 
@@ -64,7 +117,7 @@ export default function FactCheckerResult({ result }) {
       {researchSummary && (
         <div className="result-section">
           <strong>🔍 Research Summary:</strong>
-          <p>{researchSummary}</p>
+          <p>{renderTextWithLinks(researchSummary)}</p>
         </div>
       )}
 
@@ -73,7 +126,7 @@ export default function FactCheckerResult({ result }) {
           <strong>Key Findings:</strong>
           <ul>
             {findings.map((finding, index) => (
-              <li key={index}>{finding}</li>
+              <li key={index}>{renderTextWithLinks(finding)}</li>
             ))}
           </ul>
         </div>
@@ -84,7 +137,7 @@ export default function FactCheckerResult({ result }) {
           <strong>Sources:</strong>
           <ul>
             {sources.map((source, index) => (
-              <li key={index}>{source}</li>
+              <li key={index}>{renderTextWithLinks(source)}</li>
             ))}
           </ul>
         </div>

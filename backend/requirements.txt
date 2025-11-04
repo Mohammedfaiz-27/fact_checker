@@ -8,3 +8,4 @@ speechrecognition
 pymongo
 python-dotenv
 requests
+beautifulsoup4

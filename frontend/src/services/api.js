@@ -36,3 +36,15 @@ export async function checkMultimodalClaim(claimText, file) {
 
   return res.json();
 }
+
+export async function checkURLClaim(url) {
+  const res = await fetch(`${API_BASE_URL}/api/claims/url`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url: url }),
+  });
+  if (!res.ok) {
+    throw new Error(`API error: ${res.status}`);
+  }
+  return res.json();
+}

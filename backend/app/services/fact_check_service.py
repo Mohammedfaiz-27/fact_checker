@@ -1,6 +1,7 @@
 from app.repository.claim_repository import ClaimRepository
 from app.core.config import GEMINI_API_KEY, GEMINI_MODEL
 from app.services.text_extraction_service import TextExtractionService
+from app.services.url_extraction_service import URLExtractionService
 from app.services.professional_fact_check_service import ProfessionalFactCheckService
 from google import genai
 from google.genai import types
@@ -15,6 +16,7 @@ class FactCheckService:
     def __init__(self):
         self.repo = ClaimRepository()
         self.text_extractor = TextExtractionService()
+        self.url_extractor = URLExtractionService()
         self.professional_service = ProfessionalFactCheckService()
         if not GEMINI_API_KEY:
             raise ValueError("GEMINI_API_KEY environment variable is not set")
@@ -60,17 +62,17 @@ class FactCheckService:
 
             if content_type and content_type.startswith("image/"):
                 media_type = "image"
-                print("📸 Extracting text from image using OCR...")
+                print("[EXTRACTING] Extracting text from image using OCR...")
                 extracted_data = self.text_extractor.extract_text_from_image(file_content, filename)
 
             elif content_type and content_type.startswith("video/"):
                 media_type = "video"
-                print("🎥 Extracting text from video (speech + visual text)...")
+                print("[EXTRACTING] Extracting text from video (speech + visual text)...")
                 extracted_data = self.text_extractor.extract_text_from_video(file_content, filename)
 
             elif content_type and content_type.startswith("audio/"):
                 media_type = "audio"
-                print("🎤 Extracting text from audio (speech-to-text)...")
+                print("[EXTRACTING] Extracting text from audio (speech-to-text)...")
                 extracted_data = self.text_extractor.extract_text_from_audio(file_content, filename, content_type)
 
             else:
@@ -93,21 +95,21 @@ class FactCheckService:
                 }
 
             extracted_text = extracted_data.get("text", "")
-            print(f"\n✅ Text extraction complete!")
+            print(f"\n[SUCCESS] Text extraction complete!")
             print(f"Extracted content (preview): {extracted_text[:200]}...\n")
 
             # Step 2: Combine extracted text with user's claim
             if claim_text:
                 # User provided specific claim - use it as primary, extracted text as context
                 combined_claim = f"{claim_text}\n\nContext from {media_type}: {extracted_text}"
-                print(f"📝 Using user's claim with {media_type} context")
+                print(f"[COMBINING] Using user's claim with {media_type} context")
             else:
                 # No user claim - use extracted text
                 combined_claim = f"Claims from {media_type}: {extracted_text}"
-                print(f"📝 Using extracted text from {media_type} as claim")
+                print(f"[COMBINING] Using extracted text from {media_type} as claim")
 
             # Step 3: Pass to professional fact-checking service (includes Perplexity Deep Search)
-            print(f"\n🔍 Starting professional fact-check pipeline with Perplexity Deep Search...")
+            print(f"\n[FACT-CHECKING] Starting professional fact-check pipeline with Perplexity Deep Search...")
             result = self.professional_service.check_fact(combined_claim)
 
             # Add media metadata to result
@@ -115,7 +117,7 @@ class FactCheckService:
             result["media_filename"] = filename
             result["extracted_text"] = extracted_text
 
-            print(f"\n✅ Multimodal fact-check complete!")
+            print(f"\n[SUCCESS] Multimodal fact-check complete!")
             print(f"Status: {result.get('status')}")
             print(f"{'='*60}\n")
 
@@ -123,12 +125,94 @@ class FactCheckService:
 
         except Exception as e:
             error_msg = f"Error processing {content_type}: {str(e)}"
-            print(f"❌ {error_msg}")
+            print(f"[ERROR] {error_msg}")
             return {
                 "claim_text": claim_text or f"Media file: {filename}",
                 "status": "❌ Error",
                 "explanation": error_msg,
                 "sources": [],
                 "media_type": content_type,
+                "error": str(e)
+            }
+
+    def check_url_fact(self, url: str) -> dict:
+        """
+        Handle fact-checking from a URL/link.
+
+        Pipeline:
+        1. Extract article content from URL
+        2. Identify main factual claim(s)
+        3. Pass to professional fact-checking service with Perplexity Deep Search
+        """
+        try:
+            print(f"\n{'='*60}")
+            print(f"URL FACT-CHECK: {url}")
+            print(f"{'='*60}\n")
+
+            # Step 1: Extract content from URL
+            print("[EXTRACTING] Extracting content from URL...")
+            extracted_data = self.url_extractor.extract_from_url(url)
+
+            # Check if extraction failed
+            if extracted_data.get("error"):
+                return {
+                    "claim_text": f"URL: {url}",
+                    "status": "❌ Error",
+                    "explanation": extracted_data["error"],
+                    "sources": [],
+                    "url": url,
+                    "article_title": extracted_data.get("title", ""),
+                    "article_source": extracted_data.get("source", "")
+                }
+
+            main_claim = extracted_data.get("main_claim", "")
+            article_title = extracted_data.get("title", "")
+            article_source = extracted_data.get("source", "")
+            article_text = extracted_data.get("text", "")
+
+            print(f"\n[SUCCESS] Content extraction complete!")
+            print(f"Title: {article_title}")
+            print(f"Source: {article_source}")
+            print(f"Main claim: {main_claim[:150]}...\n")
+
+            if not main_claim:
+                return {
+                    "claim_text": f"URL: {url}",
+                    "status": "❌ Error",
+                    "explanation": "Could not identify a factual claim to verify from this URL.",
+                    "sources": [],
+                    "url": url,
+                    "article_title": article_title,
+                    "article_source": article_source
+                }
+
+            # Step 2: Construct claim with context
+            claim_with_context = f"{main_claim}\n\nSource article: {article_title} ({article_source})"
+
+            # Step 3: Pass to professional fact-checking service (includes Perplexity Deep Search)
+            print(f"[FACT-CHECKING] Starting professional fact-check pipeline with Perplexity Deep Search...")
+            result = self.professional_service.check_fact(claim_with_context)
+
+            # Add URL metadata to result
+            result["url"] = url
+            result["article_title"] = article_title
+            result["article_source"] = article_source
+            result["article_preview"] = article_text[:500] + "..." if len(article_text) > 500 else article_text
+
+            print(f"\n[SUCCESS] URL fact-check complete!")
+            print(f"Status: {result.get('status')}")
+            print(f"{'='*60}\n")
+
+            return result
+
+        except Exception as e:
+            error_msg = f"Error processing URL: {str(e)}"
+            print(f"[ERROR] {error_msg}")
+            return {
+                "claim_text": f"URL: {url}",
+                "status": "❌ Error",
+                "explanation": error_msg,
+                "sources": [],
+                "url": url,
                 "error": str(e)
             }
