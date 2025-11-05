@@ -1,3 +1,5 @@
+import { motion, AnimatePresence } from 'framer-motion';
+
 export default function FactCheckerResult({ result }) {
   if (!result) return null;
 
@@ -21,6 +23,29 @@ export default function FactCheckerResult({ result }) {
   const articleTitle = result.article_title || null;
   const articleSource = result.article_source || null;
   const articlePreview = result.article_preview || null;
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: [0.22, 1, 0.36, 1],
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: { duration: 0.4, ease: "easeOut" }
+    }
+  };
 
   // Get media type emoji
   const getMediaEmoji = (type) => {
@@ -57,98 +82,131 @@ export default function FactCheckerResult({ result }) {
   };
 
   return (
-    <div className="result">
-      <h2>Fact-Check Result</h2>
+    <AnimatePresence mode="wait">
+      <motion.div
+        className="result"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        exit="hidden"
+        key={result.claim_text}
+      >
+        <motion.h2
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          Fact-Check Result
+        </motion.h2>
 
-      {url && (
-        <div className="result-section url-info">
-          <strong>🔗 Source URL:</strong>
-          <p>
-            <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: '#4A90E2' }}>
-              {url}
-            </a>
-          </p>
-          {articleTitle && (
-            <p style={{ marginTop: '0.5rem' }}>
-              <strong>Article:</strong> {articleTitle}
+        {url && (
+          <motion.div className="result-section url-info" variants={itemVariants}>
+            <strong>🔗 Source URL:</strong>
+            <p>
+              <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: '#4A90E2' }}>
+                {url}
+              </a>
             </p>
-          )}
-          {articleSource && (
-            <p style={{ marginTop: '0.25rem', fontSize: '0.9em', color: '#666' }}>
-              <strong>Publisher:</strong> {articleSource}
-            </p>
-          )}
-        </div>
-      )}
+            {articleTitle && (
+              <p style={{ marginTop: '0.5rem' }}>
+                <strong>Article:</strong> {articleTitle}
+              </p>
+            )}
+            {articleSource && (
+              <p style={{ marginTop: '0.25rem', fontSize: '0.9em', color: '#666' }}>
+                <strong>Publisher:</strong> {articleSource}
+              </p>
+            )}
+          </motion.div>
+        )}
 
-      {mediaType && mediaFilename && (
-        <div className="result-section media-info">
-          <strong>{getMediaEmoji(mediaType)} Media File:</strong>
-          <p>{mediaFilename}</p>
-        </div>
-      )}
+        {mediaType && mediaFilename && (
+          <motion.div className="result-section media-info" variants={itemVariants}>
+            <strong>{getMediaEmoji(mediaType)} Media File:</strong>
+            <p>{mediaFilename}</p>
+          </motion.div>
+        )}
 
-      <div className="result-section">
-        <strong>Claim:</strong>
-        <p>{claim}</p>
-      </div>
+        <motion.div className="result-section" variants={itemVariants}>
+          <strong>Claim:</strong>
+          <p>{claim}</p>
+        </motion.div>
 
-      <div className="result-section">
-        <strong>Status:</strong>
-        <p className="status">{status}</p>
-      </div>
+        <motion.div className="result-section" variants={itemVariants}>
+          <strong>Status:</strong>
+          <motion.p
+            className="status"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.5, type: "spring", stiffness: 200 }}
+          >
+            {status}
+          </motion.p>
+        </motion.div>
 
-      {explanation && (
-        <div className="result-section">
-          <strong>Explanation:</strong>
-          <p>{renderTextWithLinks(explanation)}</p>
-        </div>
-      )}
+        {explanation && (
+          <motion.div className="result-section" variants={itemVariants}>
+            <strong>Explanation:</strong>
+            <p>{renderTextWithLinks(explanation)}</p>
+          </motion.div>
+        )}
 
-      {/* {extractedText && (
-        <div className="result-section extracted-text">
-          <strong>Extracted Content:</strong>
-          <p style={{ whiteSpace: 'pre-wrap', fontSize: '0.9em', color: '#666' }}>
-            {extractedText}
-          </p>
-        </div>
-      )} */}
+        {researchSummary && (
+          <motion.div className="result-section" variants={itemVariants}>
+            <strong>🔍 Research Summary:</strong>
+            <p>{renderTextWithLinks(researchSummary)}</p>
+          </motion.div>
+        )}
 
-      {researchSummary && (
-        <div className="result-section">
-          <strong>🔍 Research Summary:</strong>
-          <p>{renderTextWithLinks(researchSummary)}</p>
-        </div>
-      )}
+        {findings && findings.length > 0 && (
+          <motion.div className="result-section" variants={itemVariants}>
+            <strong>Key Findings:</strong>
+            <ul>
+              {findings.map((finding, index) => (
+                <motion.li
+                  key={index}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + index * 0.1 }}
+                >
+                  {renderTextWithLinks(finding)}
+                </motion.li>
+              ))}
+            </ul>
+          </motion.div>
+        )}
 
-      {findings && findings.length > 0 && (
-        <div className="result-section">
-          <strong>Key Findings:</strong>
-          <ul>
-            {findings.map((finding, index) => (
-              <li key={index}>{renderTextWithLinks(finding)}</li>
-            ))}
-          </ul>
-        </div>
-      )}
+        {sources && sources.length > 0 && (
+          <motion.div className="result-section" variants={itemVariants}>
+            <strong>Sources:</strong>
+            <ul>
+              {sources.map((source, index) => (
+                <motion.li
+                  key={index}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + index * 0.1 }}
+                >
+                  {renderTextWithLinks(source)}
+                </motion.li>
+              ))}
+            </ul>
+          </motion.div>
+        )}
 
-      {sources && sources.length > 0 && (
-        <div className="result-section">
-          <strong>Sources:</strong>
-          <ul>
-            {sources.map((source, index) => (
-              <li key={index}>{renderTextWithLinks(source)}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {cached && cacheNote && (
-        <div className="result-section cache-note">
-          <small>{cacheNote}</small>
-        </div>
-      )}
-    </div>
+        {cached && cacheNote && (
+          <motion.div
+            className="result-section cache-note"
+            variants={itemVariants}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.7 }}
+          >
+            <small>{cacheNote}</small>
+          </motion.div>
+        )}
+      </motion.div>
+    </AnimatePresence>
   );
 }
 

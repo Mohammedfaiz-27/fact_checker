@@ -1,13 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { checkClaim, checkMultimodalClaim, checkURLClaim } from '../services/api';
 
-export default function FactCheckerInput({ onResult }) {
+export default function FactCheckerInput({ onResult, loading, setLoading }) {
   const [input, setInput] = useState('');
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [inputMode, setInputMode] = useState('text'); // 'text', 'file', 'voice', 'link'
-  const [loading, setLoading] = useState(false);
 
   const fileInputRef = useRef(null);
   const mediaRecorderRef = useRef(null);

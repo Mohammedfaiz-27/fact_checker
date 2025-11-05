@@ -443,3 +443,111 @@ form {
   width: 100%;
 }
 
+/* Loading Animation Styles */
+.loading-container {
+  width: 100%;
+  max-width: 700px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+  background: var(--surface);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px var(--shadow);
+  margin-top: 16px;
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  width: 100%;
+}
+
+/* Spinner */
+.spinner-container {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.spinner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.spinner-circle {
+  width: 100%;
+  height: 100%;
+  border: 4px solid var(--border);
+  border-top-color: var(--primary);
+  border-right-color: var(--primary);
+  border-radius: 50%;
+  box-shadow: 0 0 20px rgba(37, 99, 235, 0.3);
+}
+
+/* Loading Text */
+.loading-text-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loading-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.loading-dots {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.dot {
+  font-size: 24px;
+  color: var(--primary);
+  line-height: 1;
+}
+
+/* Loading Steps */
+.loading-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 400px;
+  margin-top: 16px;
+}
+
+.loading-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--background);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.step-indicator {
+  width: 10px;
+  height: 10px;
+  background: var(--primary);
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.6);
+}
+
+.step-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
