@@ -153,19 +153,8 @@ class FactCheckService:
             print("[EXTRACTING] Extracting content from URL...")
             extracted_data = self.url_extractor.extract_from_url(url)
 
-            # Check if extraction failed
-            if extracted_data.get("error"):
-                return {
-                    "claim_text": f"URL: {url}",
-                    "status": "❌ Error",
-                    "explanation": extracted_data["error"],
-                    "sources": [],
-                    "url": url,
-                    "article_title": extracted_data.get("title", ""),
-                    "article_source": extracted_data.get("source", "")
-                }
-
-            main_claim = extracted_data.get("main_claim", "")
+            # Never reject - always proceed with whatever was extracted
+            main_claim = extracted_data.get("main_claim", "") or f"Information from URL: {url}"
             article_title = extracted_data.get("title", "")
             article_source = extracted_data.get("source", "")
             article_text = extracted_data.get("text", "")
@@ -174,17 +163,6 @@ class FactCheckService:
             print(f"Title: {article_title}")
             print(f"Source: {article_source}")
             print(f"Main claim: {main_claim[:150]}...\n")
-
-            if not main_claim:
-                return {
-                    "claim_text": f"URL: {url}",
-                    "status": "❌ Error",
-                    "explanation": "Could not identify a factual claim to verify from this URL.",
-                    "sources": [],
-                    "url": url,
-                    "article_title": article_title,
-                    "article_source": article_source
-                }
 
             # Step 2: Construct claim with context
             claim_with_context = f"{main_claim}\n\nSource article: {article_title} ({article_source})"
@@ -200,7 +178,9 @@ class FactCheckService:
             result["article_preview"] = article_text[:500] + "..." if len(article_text) > 500 else article_text
 
             print(f"\n[SUCCESS] URL fact-check complete!")
-            print(f"Status: {result.get('status')}")
+            # Avoid printing emoji status on Windows console
+            status_text = result.get('status', '').encode('ascii', errors='replace').decode('ascii')
+            print(f"Status: {status_text}")
             print(f"{'='*60}\n")
 
             return result
@@ -210,7 +190,7 @@ class FactCheckService:
             print(f"[ERROR] {error_msg}")
             return {
                 "claim_text": f"URL: {url}",
-                "status": "❌ Error",
+                "status": "[X] Error",
                 "explanation": error_msg,
                 "sources": [],
                 "url": url,

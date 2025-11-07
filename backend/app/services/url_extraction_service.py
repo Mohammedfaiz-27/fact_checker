@@ -49,16 +49,12 @@ class URLExtractionService:
             }
         """
         try:
-            # Validate URL
+            # Validate URL format and add scheme if missing
             parsed_url = urlparse(url)
-            if not parsed_url.scheme or not parsed_url.netloc:
-                return {
-                    "text": "",
-                    "main_claim": "",
-                    "title": "",
-                    "source": "",
-                    "error": "Invalid URL format. Please provide a complete URL (e.g., https://example.com)"
-                }
+            if not parsed_url.scheme:
+                # Auto-add https:// if no scheme provided
+                url = f"https://{url}"
+                parsed_url = urlparse(url)
 
             safe_print(f"\n{'='*60}")
             safe_print(f"URL EXTRACTION: {url}")
@@ -144,14 +140,9 @@ class URLExtractionService:
             # Clean up the text
             article_text = self._clean_text(article_text)
 
-            if not article_text or len(article_text) < 100:
-                return {
-                    "text": "",
-                    "main_claim": "",
-                    "title": title,
-                    "source": parsed_url.netloc,
-                    "error": "Could not extract meaningful content from this URL. The page may require JavaScript or have restricted access."
-                }
+            # Accept even minimal content - no rejection
+            if not article_text:
+                article_text = ""
 
             safe_print(f"[SUCCESS] Article text extracted ({len(article_text)} characters)")
             if title:
@@ -159,8 +150,9 @@ class URLExtractionService:
             safe_print(f"Source: {parsed_url.netloc}")
 
             # Step 3: Use Gemini to identify main claims
+            # Even if article_text is minimal, attempt to extract claim from title or URL
             safe_print("\n[3/3] Analyzing content to identify main factual claims...")
-            main_claim = self._extract_main_claim(article_text, title)
+            main_claim = self._extract_main_claim(article_text, title, url)
 
             safe_print(f"[SUCCESS] Main claim identified ({len(main_claim)} chars)")
 
@@ -173,62 +165,66 @@ class URLExtractionService:
             }
 
         except requests.exceptions.Timeout:
-            error_msg = "Request timeout. The website took too long to respond (>20 seconds)."
-            safe_print(f"[ERROR] {error_msg}")
+            # No rejection - create a claim from the URL itself
+            safe_print(f"[NOTICE] Request timeout, proceeding with URL as claim")
+            parsed_url = urlparse(url)
             return {
-                "text": "",
-                "main_claim": "",
-                "title": "",
-                "source": parsed_url.netloc if parsed_url else "",
-                "error": error_msg
+                "text": f"This URL took too long to respond (>20 seconds): {url}",
+                "main_claim": f"Information from the URL: {url}",
+                "title": parsed_url.netloc or url,
+                "source": parsed_url.netloc if parsed_url else url,
+                "error": None
             }
 
         except requests.exceptions.ConnectionError as e:
-            error_msg = f"Connection error. Could not reach the website. This might be due to: (1) No internet connection, (2) Website is down, (3) Website blocks automated requests. Details: {str(e)}"
-            safe_print(f"[ERROR] {error_msg}")
+            # No rejection - create a claim from the URL itself
+            safe_print(f"[NOTICE] Connection error, proceeding with URL as claim")
+            parsed_url = urlparse(url)
             return {
-                "text": "",
-                "main_claim": "",
-                "title": "",
-                "source": parsed_url.netloc if parsed_url else "",
-                "error": "Connection error. Could not reach the website. The site may be down, blocking automated requests, or there may be a network issue."
+                "text": f"Could not fetch content from this URL (connection issue): {url}",
+                "main_claim": f"Information regarding the URL: {url}",
+                "title": parsed_url.netloc or url,
+                "source": parsed_url.netloc if parsed_url else url,
+                "error": None
             }
 
         except requests.exceptions.SSLError as e:
-            error_msg = f"SSL certificate error. The website's security certificate could not be verified. Details: {str(e)}"
-            safe_print(f"[ERROR] {error_msg}")
+            # No rejection - create a claim from the URL itself
+            safe_print(f"[NOTICE] SSL error, proceeding with URL as claim")
+            parsed_url = urlparse(url)
             return {
-                "text": "",
-                "main_claim": "",
-                "title": "",
-                "source": parsed_url.netloc if parsed_url else "",
-                "error": "SSL certificate error. The website's security certificate could not be verified."
+                "text": f"SSL certificate issue with this URL: {url}",
+                "main_claim": f"Content related to the URL: {url}",
+                "title": parsed_url.netloc or url,
+                "source": parsed_url.netloc if parsed_url else url,
+                "error": None
             }
 
         except requests.exceptions.HTTPError as e:
-            error_msg = f"HTTP error {e.response.status_code}. The website returned an error."
-            safe_print(f"[ERROR] {error_msg}")
+            # No rejection - create a claim from the URL itself
+            safe_print(f"[NOTICE] HTTP error {e.response.status_code if hasattr(e, 'response') else 'unknown'}, proceeding with URL as claim")
+            parsed_url = urlparse(url)
             return {
-                "text": "",
-                "main_claim": "",
-                "title": "",
-                "source": "",
-                "error": error_msg
+                "text": f"HTTP error when accessing this URL: {url}",
+                "main_claim": f"Information from the URL: {url}",
+                "title": parsed_url.netloc or url,
+                "source": parsed_url.netloc if parsed_url else url,
+                "error": None
             }
 
         except Exception as e:
-            error_msg = f"Error extracting content from URL: {str(e)}"
-            safe_print(f"[ERROR] {error_msg}")
-            # Print full traceback for debugging
+            # No rejection - create a claim from the URL itself
+            safe_print(f"[NOTICE] Error occurred, proceeding with URL as claim: {str(e)}")
             import traceback
             safe_print(f"[DEBUG] Traceback:")
             traceback.print_exc()
+            parsed_url = urlparse(url)
             return {
-                "text": "",
-                "main_claim": "",
-                "title": "",
-                "source": "",
-                "error": error_msg
+                "text": f"Unable to extract content from this URL: {url}",
+                "main_claim": f"Information about the URL: {url}",
+                "title": parsed_url.netloc or url,
+                "source": parsed_url.netloc if parsed_url else url,
+                "error": None
             }
 
     def _clean_text(self, text: str) -> str:
@@ -242,18 +238,26 @@ class URLExtractionService:
         text = '\n'.join(lines)
         return text.strip()
 
-    def _extract_main_claim(self, article_text: str, title: str) -> str:
+    def _extract_main_claim(self, article_text: str, title: str, url: str = "") -> str:
         """
         Use Gemini to identify the main factual claim(s) from the article.
 
         Args:
             article_text (str): The full article text
             title (str): The article title
+            url (str): The source URL (fallback if no content)
 
         Returns:
             str: The main claim(s) to fact-check
         """
         try:
+            # If no content available, use URL and title as the claim
+            if not article_text or len(article_text) < 50:
+                if title:
+                    return f"Claims or information related to: {title} (Source: {url})"
+                else:
+                    return f"Information and claims from the URL: {url}"
+
             # Truncate article if too long (keep first 5000 chars for analysis)
             truncated_text = article_text[:5000] if len(article_text) > 5000 else article_text
 
@@ -296,6 +300,11 @@ MAIN CLAIM: [the primary factual claim(s) to fact-check]
 
         except Exception as e:
             safe_print(f"[WARNING] Error extracting main claim with Gemini: {str(e)}")
-            # Fallback: use title + first paragraph
-            first_para = article_text.split('\n\n')[0] if '\n\n' in article_text else article_text[:500]
-            return f"{title}. {first_para[:300]}"
+            # Fallback: use title + first paragraph, or URL if nothing else
+            if article_text and len(article_text) > 0:
+                first_para = article_text.split('\n\n')[0] if '\n\n' in article_text else article_text[:500]
+                return f"{title}. {first_para[:300]}" if title else first_para[:300]
+            elif title:
+                return f"Claims from: {title} (Source: {url})"
+            else:
+                return f"Information from the URL: {url}"
