@@ -20,5 +20,6 @@ try:
 except ConnectionFailure:
     print("MongoDB connection failed!")
 
-# Example: Access the 'claims' collection
+# Collections
 claims_collection = db["claims"]
+users_collection = db["users"]

@@ -1,9 +1,10 @@
 import asyncio
-from fastapi import APIRouter, File, UploadFile, Form
+from fastapi import APIRouter, File, UploadFile, Form, Depends
 from typing import Optional
 from pydantic import BaseModel
 from app.services.fact_check_service import FactCheckService
 from app.services.professional_fact_check_service import ProfessionalFactCheckService
+from app.middleware.auth_middleware import get_current_user_id
 
 router = APIRouter()
 service = FactCheckService()
@@ -16,7 +17,7 @@ class URLInput(BaseModel):
     url: str
 
 @router.post("/")
-async def check_claim(data: ClaimInput):
+async def check_claim(data: ClaimInput, user_id: str = Depends(get_current_user_id)):
     # Run blocking check_fact in threadpool to prevent blocking event loop
     # Using professional service with full pipeline
     loop = asyncio.get_event_loop()
@@ -26,7 +27,8 @@ async def check_claim(data: ClaimInput):
 @router.post("/multimodal")
 async def check_multimodal_claim(
     claim_text: Optional[str] = Form(None),
-    file: Optional[UploadFile] = File(None)
+    file: Optional[UploadFile] = File(None),
+    user_id: str = Depends(get_current_user_id)
 ):
     """
     Handle multimodal fact checking: text, images, videos, and audio files
@@ -54,7 +56,7 @@ async def check_multimodal_claim(
     return result
 
 @router.post("/url")
-async def check_url_claim(data: URLInput):
+async def check_url_claim(data: URLInput, user_id: str = Depends(get_current_user_id)):
     """
     Handle fact checking from a URL/link.
     Extracts article content and fact-checks the main claims.

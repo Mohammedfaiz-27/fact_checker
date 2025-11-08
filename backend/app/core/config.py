@@ -21,3 +21,8 @@ PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 BACKEND_PORT = int(os.getenv("BACKEND_PORT", "8000"))
 BACKEND_HOST = os.getenv("BACKEND_HOST", "0.0.0.0")
+
+# JWT Authentication Configuration
+import secrets
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", secrets.token_urlsafe(32))
+JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
