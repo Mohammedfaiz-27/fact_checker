@@ -19,7 +19,7 @@ function HomePage() {
       <Navbar />
       <div className="container">
         <header className="app-header">
-          <h1 className="app-title">Fact Checker</h1>
+          <h1 className="app-title">Bringing Clarity to Every Claim</h1>
           {/* <p className="app-subtitle">Verify claims with AI-powered research</p> */}
         </header>
         <FactCheckerInput onResult={setResult} loading={loading} setLoading={setLoading} />
