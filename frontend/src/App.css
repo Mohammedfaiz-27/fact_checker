@@ -14,7 +14,7 @@
   --background: #FFFFFF;
   --surface: #FFFFFF;
   --text-primary: #1F2937;
-  --text-secondary: #6B7280;
+  --text-secondary: #31343c;
   --border: #E5E7EB;
 
   /* Status Colors */
@@ -289,7 +289,7 @@ button:active {
   justify-content: center;
   flex-wrap: wrap;
   padding: 4px;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(222, 220, 228, 0.6);
   border-radius: 10px;
 }
 
