@@ -9,13 +9,15 @@ class PerplexityService:
 
     def __init__(self):
         if not PERPLEXITY_API_KEY:
-            print("WARNING: PERPLEXITY_API_KEY not set. Research functionality will be limited.")
+            print("[WARNING] PERPLEXITY_API_KEY not set. Research functionality will be limited.")
             self.api_key = None
         else:
             self.api_key = PERPLEXITY_API_KEY
+            print(f"[INFO] Perplexity service initialized with API key: {self.api_key[:10]}...")
 
         self.base_url = "https://api.perplexity.ai/chat/completions"
         self.model = "sonar-pro"  # Perplexity's online research model
+        print(f"[INFO] Perplexity model: {self.model}")
 
     def deep_research(self, search_query: str, structured_claim: dict) -> dict:
         """
@@ -99,13 +101,16 @@ SOURCES:
 
             if response.status_code == 200:
                 result = response.json()
+                print(f"[DEBUG] Perplexity API success. Model: {self.model}")
                 research_text = result['choices'][0]['message']['content']
+                print(f"[DEBUG] Research text length: {len(research_text)}")
 
                 # Parse the response
                 parsed_result = self._parse_research_response(research_text)
+                print(f"[DEBUG] Parsed result - Findings: {len(parsed_result.get('findings', []))}, Sources: {len(parsed_result.get('sources', []))}")
                 return parsed_result
             else:
-                print(f"Perplexity API error: {response.status_code} - {response.text}")
+                print(f"[ERROR] Perplexity API error: {response.status_code} - {response.text}")
                 return self._fallback_research(search_query)
 
         except requests.exceptions.Timeout:
