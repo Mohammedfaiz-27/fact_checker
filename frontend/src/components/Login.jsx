@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { login as loginApi } from '../services/authApi';
+import ThemeToggle from './ThemeToggle';
 import './Auth.css';
 
 function Login() {
@@ -10,6 +12,7 @@ function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -33,6 +36,9 @@ function Login() {
 
   return (
     <div className="auth-container">
+      <div className="theme-toggle-absolute">
+        <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
+      </div>
       <div className="auth-card">
         <div className="auth-header">
           <h1 className="auth-title">Welcome Back</h1>

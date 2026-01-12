@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { signup as signupApi } from '../services/authApi';
+import ThemeToggle from './ThemeToggle';
 import './Auth.css';
 
 function Signup() {
@@ -12,6 +14,7 @@ function Signup() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const validatePassword = (pwd) => {
@@ -65,6 +68,9 @@ function Signup() {
 
   return (
     <div className="auth-container">
+      <div className="theme-toggle-absolute">
+        <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
+      </div>
       <div className="auth-card">
         <div className="auth-header">
           <h1 className="auth-title">Create Account</h1>

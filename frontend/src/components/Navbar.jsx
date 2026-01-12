@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { logout as logoutApi } from '../services/authApi';
+import ThemeToggle from './ThemeToggle';
 import './Navbar.css';
 
 function Navbar() {
   const { user, logout, isAuthenticated } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [showDropdown, setShowDropdown] = useState(false);
 
   const handleLogout = async () => {
@@ -35,31 +38,34 @@ function Navbar() {
           />
         </div>
 
-        <div className="navbar-user">
-          <button
-            className="user-button"
-            onClick={() => setShowDropdown(!showDropdown)}
-          >
-            <div className="user-avatar">
-              {user?.name?.charAt(0).toUpperCase() || 'U'}
-            </div>
-            <span className="user-name">{user?.name}</span>
-            <svg
-              className={`dropdown-icon ${showDropdown ? 'open' : ''}`}
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
+        <div className="navbar-actions">
+          <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
+
+          <div className="navbar-user">
+            <button
+              className="user-button"
+              onClick={() => setShowDropdown(!showDropdown)}
             >
-              <path
-                d="M4 6L8 10L12 6"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
+              <div className="user-avatar">
+                {user?.name?.charAt(0).toUpperCase() || 'U'}
+              </div>
+              <span className="user-name">{user?.name}</span>
+              <svg
+                className={`dropdown-icon ${showDropdown ? 'open' : ''}`}
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+              >
+                <path
+                  d="M4 6L8 10L12 6"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
 
           {showDropdown && (
             <>
@@ -93,6 +99,7 @@ function Navbar() {
               </div>
             </>
           )}
+          </div>
         </div>
 
       </div>

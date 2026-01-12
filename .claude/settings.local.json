@@ -23,7 +23,10 @@
       "Bash(del test_url_debug.py test_url_real.py test_url_simple.py)",
       "Bash(npm install:*)",
       "Bash(nul)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(ping:*)",
+      "Bash(tree:*)",
+      "WebFetch(domain:docs.perplexity.ai)"
     ],
     "deny": [],
     "ask": []
