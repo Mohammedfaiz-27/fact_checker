@@ -102,11 +102,28 @@ SOURCES:
             if response.status_code == 200:
                 result = response.json()
                 print(f"[DEBUG] Perplexity API success. Model: {self.model}")
+
+                # Check if citations are available in the response
+                citations = result.get('citations', [])
+                search_results = result.get('search_results', [])
+                print(f"[DEBUG] Direct citations: {len(citations)}, search_results: {len(search_results)}")
+
                 research_text = result['choices'][0]['message']['content']
                 print(f"[DEBUG] Research text length: {len(research_text)}")
+                print(f"[DEBUG] Research text preview: {research_text[:500]}...")
 
-                # Parse the response
-                parsed_result = self._parse_research_response(research_text)
+                # Use direct citations/search_results if available, otherwise parse text
+                if citations or search_results:
+                    print(f"[DEBUG] Using direct citations and search_results from API")
+                    parsed_result = {
+                        "summary": research_text,
+                        "findings": self._extract_findings_from_text(research_text),
+                        "sources": citations[:10]  # Limit to 10 sources
+                    }
+                else:
+                    # Parse the response text
+                    parsed_result = self._parse_research_response(research_text)
+
                 print(f"[DEBUG] Parsed result - Findings: {len(parsed_result.get('findings', []))}, Sources: {len(parsed_result.get('sources', []))}")
                 return parsed_result
             else:
@@ -162,6 +179,20 @@ SOURCES:
             "findings": findings,
             "sources": sources
         }
+
+    def _extract_findings_from_text(self, text: str) -> list:
+        """
+        Extract key findings from research text by splitting into sentences.
+
+        Args:
+            text (str): Research text
+
+        Returns:
+            list: List of key findings (sentences)
+        """
+        # Split text into sentences and take first 3-5 meaningful sentences
+        sentences = [s.strip() for s in text.split('.') if len(s.strip()) > 20]
+        return sentences[:5]  # Return first 5 sentences as findings
 
     def _fallback_research(self, search_query: str) -> dict:
         """
