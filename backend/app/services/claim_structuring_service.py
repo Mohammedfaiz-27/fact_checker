@@ -116,12 +116,7 @@ Now convert this user input:
                 last_error = e
                 error_msg = str(e)
 
-                # Check if it's a quota exhaustion error (429) - don't retry
-                if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg or "quota" in error_msg.lower():
-                    print(f"[WARNING] Gemini API quota exhausted during claim structuring. Using fallback structure.")
-                    return self._create_fallback_structure(claim_text)
-
-                # Check if it's a 503 (overload) error - retry with backoff
+                # Check if it's a 503 (overload) error
                 if "503" in error_msg or "UNAVAILABLE" in error_msg or "overload" in error_msg.lower():
                     if attempt < max_retries - 1:
                         # Exponential backoff: wait 2^attempt seconds

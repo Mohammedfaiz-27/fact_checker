@@ -182,15 +182,6 @@ EXPLANATION: [explanation]
                 last_error = e
                 error_msg = str(e)
 
-                # Check if it's a quota exhaustion error (429)
-                if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg or "quota" in error_msg.lower():
-                    print(f"[WARNING] Gemini API quota exhausted. Cannot generate verdict.")
-                    return {
-                        "status": "📊 Research Complete",
-                        "explanation": "Our AI verdict generator has reached its daily usage limit. However, we've successfully gathered comprehensive research from credible sources above. Please review the research summary and findings to draw your own conclusion.",
-                        "sources": research_data.get("sources", [])
-                    }
-
                 # Check if it's a 503 (overload) error
                 if "503" in error_msg or "UNAVAILABLE" in error_msg or "overload" in error_msg.lower():
                     if attempt < max_retries - 1:
@@ -204,11 +195,11 @@ EXPLANATION: [explanation]
                 else:
                     print(f"Verdict generation error: {error_msg}")
 
-                # If last attempt, return user-friendly error
+                # If last attempt, return error result
                 if attempt == max_retries - 1:
                     return {
                         "status": "⚠️ Unverified",
-                        "explanation": "Unable to generate an AI verdict at this time due to a technical issue. Please review the research data above for relevant information.",
+                        "explanation": f"Unable to generate verdict. {error_msg}",
                         "sources": research_data.get("sources", [])
                     }
 
